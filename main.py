@@ -28,7 +28,7 @@ def get_data(name, test_per):
   return train_test_split(x, y, test_size=test_per)
 
 
-rate, epochs = (0.3, 1000)
+rate, epochs = (0.1, 100)
 train_x, test_x, train_y, test_y = get_data('sonar.csv', 0.2)
 inps, outs = (len(train_x[0]), 2)
 hids = int(0.5*(inps+outs))
@@ -48,9 +48,8 @@ sess.run(tf.global_variables_initializer())
 # savr = tf.train.Saver()
 for epoch in range(epochs):
   sess.run(train_step, {x: train_x, y_: train_y})
-  cost = sess.run(cost_func, {x: train_x, y_: train_y})
-  # pred = tf.equal(y, y_)
-  # accr = tf.reduce_mean(tf.cast(pred, tf.float32))
-  # accr_v = sess.run(accr, {x: train_x, y_: train_y})
-  # print('Epoch %d: %f accuracy' % (epoch, accr_v))
+  pred = tf.equal(tf.argmax(y,1),tf.argmax(y_,1))
+  accr = tf.reduce_mean(tf.cast(pred, tf.float32))
+  accr_v = sess.run(accr, {x: train_x, y_: train_y})
+  print('Epoch %d: %f accuracy' % (epoch, accr_v))
 # savr.save(sess, 'sonar')
