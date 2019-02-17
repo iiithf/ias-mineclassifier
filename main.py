@@ -1,61 +1,56 @@
+from sklearn.utils import shuffle
+from sklearn.model_selection import train_test_split
 import tensorflow as tf
-import random
-import csv
+import pandas as pd
+import numpy as np
 
-
-def csv_read(name):
-  rows = []
-  with open(name) as f:
-    for row in csv.reader(f):
-      rows.append(row)
-  return rows
-
-def list_split(lst, per):
-  i = int(per*len(lst))
-  return (lst[:i], lst[i+1:])
 
 def ann_layer(x, size):
   w = tf.Variable(tf.truncated_normal(size))
-  b = tf.Variable(tf.truncated_normal(size[-1]))
-  y = tf.add(tf.matmul(x, w), b)
-  return tf.nn.relu(y)
+  b = tf.Variable(tf.truncated_normal(size[-1:]))
+  return tf.add(tf.matmul(x, w), b)
 
-def ann_network(x, size):
-  l = ann_layer(x, size[0:2])
-  for i in range(1, len(size)-1):
-    l = ann_layer(l, size[i:i+2])
-  return l
-
-def ann_train(outp, labl, rate):
-  cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=outp, labels=labl))
-  return tf.train.GradientDescentOptimizer(rate).minimize(cost)
+def ann_network(x):
+  h1 = tf.nn.relu(ann_layer(x, [60, 60]))
+  h2 = tf.nn.sigmoid(ann_layer(h1, [60, 60]))
+  h3 = tf.nn.sigmoid(ann_layer(h2, [60, 60]))
+  h4 = tf.nn.relu(ann_layer(h3, [60, 60]))
+  return ann_layer(h4, [60, 2])
 
 
-def get_data(name, train_per):
-  rows = []
-  for row in csv_read(name)[1:]:
-    rows.append({'x': row[:-1], 'y_': row[-1:]})
-  random.shuffle(rows)
-  return list_split(rows, train_per)
+def get_data(name, test_per):
+  d = pd.read_csv(name)
+  x = d[d.columns[:-1]].values
+  y = d[d.columns[-2:]].values.astype(float)
+  for i in range(y.shape[0]):
+    y[i][0] = 1 - y[i][1]
+  x, y = shuffle(x, y)
+  return train_test_split(x, y, test_size=test_per)
 
 
-
-(rate, epochs) = (0.3, 1000)
-(trains, tests) = get_data('sonar.csv', 0.8)
-inps = len(trains[0].x)
-outs = len(trains[0].y_)
+rate, epochs = (0.3, 1000)
+train_x, test_x, train_y, test_y = get_data('sonar.csv', 0.2)
+inps, outs = (len(train_x[0]), 1)
 hids = int(0.5*(inps+outs))
-size = [inps, hids, outs]
+print('train_x.shape:', train_x.shape)
+print('train_y.shape:', train_y.shape)
+print('test_x.shape:', test_x.shape)
+print('test_y.shape:', test_y.shape)
 
-x = tf.placeholder(tf.float32, inps)
-y_ = tf.placeholder(tf.float32, outs)
-y = ann_network(x, size)
-step = ann_train(y, y_, rate)
+x = tf.placeholder(tf.float32, [None, inps])
+y_ = tf.placeholder(tf.float32, [None, outs])
+y = ann_network(x)
+cost_func = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=y, labels=y_))
+train_step = tf.train.GradientDescentOptimizer(rate).minimize(cost_func)
 
 sess = tf.Session()
 sess.run(tf.global_variables_initializer())
+# savr = tf.train.Saver()
 for epoch in range(epochs):
-  for train in trains:
-    sess.run(step, train)
-  
-
+  sess.run(train_step, {x: train_x, y_: train_y})
+  cost = sess.run(cost_func, {x: train_x, y_: train_y})
+  # pred = tf.equal(y, y_)
+  # accr = tf.reduce_mean(tf.cast(pred, tf.float32))
+  # accr_v = sess.run(accr, {x: train_x, y_: train_y})
+  # print('Epoch %d: %f accuracy' % (epoch, accr_v))
+# savr.save(sess, 'sonar')
