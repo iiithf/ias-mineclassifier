@@ -3,6 +3,7 @@ from sklearn.model_selection import train_test_split
 import tensorflow as tf
 import pandas as pd
 import numpy as np
+import os
 
 
 def ann_layer(x, size):
@@ -43,6 +44,7 @@ y = ann_network(x)
 cost_func = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=y, labels=y_))
 train_step = tf.train.GradientDescentOptimizer(rate).minimize(cost_func)
 
+os.mkdir('build')
 sess = tf.Session()
 savr = tf.train.Saver()
 sess.run(tf.global_variables_initializer())
@@ -53,4 +55,4 @@ for epoch in range(epochs):
   accr = tf.reduce_mean(tf.cast(pred, tf.float32))
   accr_v = sess.run(accr, {x: train_x, y_: train_y})
   print('Epoch %d: %f accuracy' % (epoch, accr_v))
-savr.save(sess, 'sonar')
+savr.save(sess, 'build/sonar')
