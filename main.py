@@ -30,7 +30,7 @@ def get_data(name, test_per):
 
 rate, epochs = (0.3, 1000)
 train_x, test_x, train_y, test_y = get_data('sonar.csv', 0.2)
-inps, outs = (len(train_x[0]), 1)
+inps, outs = (len(train_x[0]), 2)
 hids = int(0.5*(inps+outs))
 print('train_x.shape:', train_x.shape)
 print('train_y.shape:', train_y.shape)
