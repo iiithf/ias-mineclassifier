@@ -44,6 +44,7 @@ cost_func = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=y, lab
 train_step = tf.train.GradientDescentOptimizer(rate).minimize(cost_func)
 
 sess = tf.Session()
+savr = tf.train.Saver()
 sess.run(tf.global_variables_initializer())
 # savr = tf.train.Saver()
 for epoch in range(epochs):
@@ -52,4 +53,4 @@ for epoch in range(epochs):
   accr = tf.reduce_mean(tf.cast(pred, tf.float32))
   accr_v = sess.run(accr, {x: train_x, y_: train_y})
   print('Epoch %d: %f accuracy' % (epoch, accr_v))
-# savr.save(sess, 'sonar')
+savr.save(sess, 'sonar')
